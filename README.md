@@ -32,24 +32,19 @@ pip install -r requirements.txt
 
 ## CMPS++
 
-The `Source_code\.py`file contains the implementation of  the **CMPS++** approach.
+The `Source_code\cmps_extend.py`file contains the implementation of  the **CMPS++** approach.
 Run the following function to perform MP selection for a given test selection problem:
 
 ```python
-def sets(size, index, features,output_probability,uncertainty,diversity,a)
+def cmps_extend (ori_mdata,mr_mdata,budget)
 ```
-
 The input parameters include:
 
-* `size`: test budget (int)
-* `index`: indexes of all the test inputs (list)
-* `features`: features of all the test inputs (numpy)
-* `output_probability`: the output probabilities of all the test inputs (numpy)
-* `uncertainty`: "maxp" or "gini" (str)
-* `diversity`: "gd" or "std" (str)
-* `a`: the reduction coefficient (int)
+* `ori_mdata`: ori_data[0] = filenames, ori_data[1] = source_labels,ori_data[2] = output probabilities of source (dist)
+* `mr_mdata`: mr_mdata[0] = mr1.dict(){filenames: follow-up_labels, output probabilities of follow-ups} ( a list of dist)
+* `budget`: test budget (int)
 
-The output will be  a list of indexes of the selected test inputs and the execution time.
+The output will be  a TRC and  a FDR value calculated by the selected MPs.
 
 ## Reproducing Experiments
 
