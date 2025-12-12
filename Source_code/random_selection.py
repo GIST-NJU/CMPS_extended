@@ -98,9 +98,9 @@ def random_selection(ori_mdata, mr_mdata,budget,faults):
         total_uniq += len(uniq_p)
         total_error += len(all_pairs)
 
-    output_path = '/Users/miya_wang/Desktop/Papers/Second_paper/DNN-MT/replication/random/' + dataset + '_' + model + '_' + str(budget) + '.pkl'
-    with open(output_path, "wb") as f:
-        pickle.dump(all_results, f)
+    #output_path = '/Users/miya_wang/Desktop/Papers/Second_paper/DNN-MT/replication/random/' + dataset + '_' + model + '_' + str(budget) + '.pkl'
+    #with open(output_path, "wb") as f:
+    #    pickle.dump(all_results, f)
 
     print("TRC:",total_error / (budget * times))
     print("FDR:",total_uniq / (times*faults))
@@ -112,7 +112,7 @@ mr_list = ['flipLeftRight', 'gaussian', 'colored', 'rotatePlus5deg', 'brightness
 mr_list2 = ['flip_left_right 0', 'gaussian 2', 'colored 1.6', 'rotate 5', 'brightness 1.3']
 cell_list = ['fileNamesArray', 'labelSourceArray', 'confidenceSourceArray', 'labelFollowUpArray', 'confidenceFollowUpArray']
 dir_path = '/Users/miya_wang/Desktop/Papers/Second_paper/DNN-MT/matlab/' #you should change the path when running
-datasets = ['fashion','cifar10','imagenet']
+datasets = ['fruit360']
 # start RS
 for dataset in datasets:
     if dataset == 'fashion':
@@ -133,6 +133,16 @@ for dataset in datasets:
             for budget in [500,1000]:
                 print(budget)
                 faults = 90
+                random_selection(ori_mdata, mr_mdata, budget, faults)
+
+    elif dataset == "fruit360":
+        for model in ['mobilenetv2','shufflenet']:
+            print(dataset, model)
+            path = dir_path + dataset + '_' + model + '/'
+            ori_mdata, mr_mdata = data_process(path)
+            for budget in [500,1000]:
+                print(budget)
+                faults = budget
                 random_selection(ori_mdata, mr_mdata, budget, faults)
 
     elif dataset == 'imagenet':
