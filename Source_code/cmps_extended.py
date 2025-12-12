@@ -360,7 +360,6 @@ mr_list2 = ['flip_left_right 0', 'gaussian 2', 'colored 1.6', 'rotate 5', 'brigh
 cell_list = ['fileNamesArray', 'labelSourceArray', 'confidenceSourceArray', 'labelFollowUpArray', 'confidenceFollowUpArray']
 dir_path = '/Users/miya_wang/Desktop/Papers/Second_paper/DNN-MT/matlab/' #you should change the path when running
 datasets =  ['fashion', 'cifar10','fruit360', 'imagenet']
-time_path = '/Users/miya_wang/Desktop/CMPS++/results/time/mpss'
 
 for dataset in datasets:
     if dataset =='fashion':

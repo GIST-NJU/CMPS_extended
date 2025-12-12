@@ -91,20 +91,24 @@ def data_process(path):
         mr_mdata.append(cell_dict)
     return ori_mdata,mr_mdata
 
-def CMPS(ori_mdata,mr_mdata,budget):
+def cmps(ori_mdata,mr_mdata,budget):
     # clustering
     predictions = ori_mdata[2]
     if dataset == 'imagenet':
-        n=1000
+        n = 1000
+    elif dataset == 'cifar100':
+        n = 100
+    elif dataset == 'fruit360':
+        n = 141
     else:
-        n=10
+        n = 10
     predictions = np.array([np.pad(pred, (0, n - len(pred)), 'constant') for pred in predictions])
     scaler = StandardScaler()
     predictions_scaled = scaler.fit_transform(predictions)
     dbscan_labels = my_dbscan.dbscan(predictions_scaled, eps=0.15, min_samples=1)
 
     cluster_counts = Counter(dbscan_labels)
-    cluster_size = {}  # counter the number of each cluster
+    cluster_size = {}  # 计算每个聚类中的总数
     for cluster_label, count in cluster_counts.items():
         cluster_size[cluster_label] = count
     image_cluster_count = {}
@@ -116,17 +120,21 @@ def CMPS(ori_mdata,mr_mdata,budget):
     imgpath_orilabel_dict = {}
     image_uncertainty = dict()
     image_cluster = {}
+
+    #w_maxp = n / (n + 10)  # 指标权重
+    #w_gini = 1 - w_maxp
     for index in range(len(img_paths)):
-        image_cluster[img_paths[index]] = dbscan_labels[index]  # image_path-number of clusters
+        image_cluster[img_paths[index]] = dbscan_labels[index]  # 图像路径-图像聚类num
         imgpath_pred_dict[img_paths[index]] = predictions[index]
         ori_label = ori_mdata[1][index]
         imgpath_orilabel_dict[img_paths[index]] = ori_label
-        sum = 0
+        sum_un = 0
         for i in predictions[index]:
             if i > 0:
-                sum += pow(i, 2)
-        uncertainty = 1 - sum #get the uncertainty score
+                sum_un += pow(i, 2)
+        uncertainty = 1 - sum_un #get the uncertainty score
         image_uncertainty[img_paths[index]] = uncertainty
+
 
     image_uncertainty_sorted = sorted(image_uncertainty.items(), key=lambda x: x[1], reverse=True)  # rank based on uncertainty
     origin_sorted = image_uncertainty_sorted
@@ -134,6 +142,7 @@ def CMPS(ori_mdata,mr_mdata,budget):
     # start selection
     processed_img = []
     fault_record = {}
+    select_record = {}
     model_run_times = 0
     error_num = 0
     d = 0
@@ -212,16 +221,26 @@ def CMPS(ori_mdata,mr_mdata,budget):
                 model_run_times += 1
                 if image_cluster[img_path] in image_cluster_count:
                     bad_clus_list.append(image_cluster[img_path])
+                #记录所有的选择
+                if img_path not in select_record:
+                    select_record[img_path] = [(mr_list[max_index], ori_label, f_label)]
+                else:
+                    select_record[img_path].append((mr_list[max_index], ori_label, f_label))
             else:
                 if image_cluster[img_path] in image_cluster_count:
                     good_clus_list.append(image_cluster[img_path])  # fail, become good_cluster
-
                 model_run_times += 1
                 error_num += 1
                 if img_path not in fault_record:
                     fault_record[img_path] = [(mr_list[max_index], ori_label, f_label)]
                 else:
                     fault_record[img_path].append((mr_list[max_index], ori_label, f_label))
+
+                # 记录所有的选择
+                if img_path not in select_record:
+                    select_record[img_path] = [(mr_list[max_index], ori_label, f_label)]
+                else:
+                    select_record[img_path].append((mr_list[max_index], ori_label, f_label))
 
         else: # cifar10 & imagenet
             img = image.load_img(img_path)
@@ -246,16 +265,28 @@ def CMPS(ori_mdata,mr_mdata,budget):
                 model_run_times += 1
                 if image_cluster[img_path] in image_cluster_count:
                     bad_clus_list.append(image_cluster[img_path])
+                # 记录所有的选择
+                if img_path not in select_record:
+                    select_record[img_path] = [(mr_list[max_index], ori_label, f_label)]
+                else:
+                    select_record[img_path].append((mr_list[max_index], ori_label, f_label))
             else:
 
                 if image_cluster[img_path] in image_cluster_count:
                     good_clus_list.append(image_cluster[img_path])
+
                 model_run_times += 1
                 error_num += 1
                 if img_path not in fault_record:
                     fault_record[img_path] = [(mr_list[max_index], ori_label, f_label)]
                 else:
                     fault_record[img_path].append((mr_list[max_index], ori_label, f_label))
+
+                # 记录所有的选择
+                if img_path not in select_record:
+                    select_record[img_path] = [(mr_list[max_index], ori_label, f_label)]
+                else:
+                    select_record[img_path].append((mr_list[max_index], ori_label, f_label))
 
         flag_c = True
         for k, v in image_cluster_count.items():
@@ -269,28 +300,27 @@ def CMPS(ori_mdata,mr_mdata,budget):
             good_clus_list = []
             bad_clus_list = []
 
-    output_path = '/Users/miya_wang/Desktop/Papers/Second_paper/DNN-MT/replication/CMPS/' + dataset + '_' + model + '_' + str(file_budget) + '.pkl'
-    with open(output_path,'w') as file:
-        json.dump(fault_record, file)
+    #output_path = '/Users/miya_wang/Desktop/Papers/Second_paper/DNN-MT/replication/CMPS/' + dataset + '_' + model + '_' + str(file_budget) + '.pkl'
+    #with open(output_path,'w') as file:
+        #json.dump(fault_record, file)
+
+
+    #print(error_num)
 
 
     print("TRC:",error_num / model_run_times)
-
     all_pairs = []
-    sum = 0
+    sum_pairs = 0
     for v in fault_record.values():
         for e in v:
             all_pairs.append(e[1:])
-        sum += len(v)
+        sum_pairs += len(v)
     unique_pairs = remove_duplicates(all_pairs)
-    if dataset == 'imagenet':
+    if dataset == 'imagenet' or dataset == 'fruit360' or dataset == 'cifar100':
         faults = file_budget
     else:
         faults = 90
-
     print("FDR:", len(unique_pairs) / faults)
-
-
 
 
 
@@ -298,11 +328,13 @@ mr_list = ['flipLeftRight', 'gaussian', 'colored', 'rotatePlus5deg', 'brightness
 mr_list2 = ['flip_left_right 0', 'gaussian 2', 'colored 1.6', 'rotate 5', 'brightness 1.3']
 cell_list = ['fileNamesArray', 'labelSourceArray', 'confidenceSourceArray', 'labelFollowUpArray', 'confidenceFollowUpArray']
 dir_path = '/Users/miya_wang/Desktop/Papers/Second_paper/DNN-MT/matlab/' #you should change the path when running
-datasets = ['fashion', 'cifar10', 'imagenet']
+datasets =  ['fashion', 'cifar10','fruit360', 'imagenet']
 
 for dataset in datasets:
     if dataset =='fashion':
-        base_path = '/Users/miya_wang/Desktop/CMPS_replication/subjects/datasets/Fashion-MNIST' #you should change the path when running
+        base_path = '/Users/miya_wang/Desktop/CMPS++/Fashion-MNIST' #you should change the path when running
+        src_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/fashion_src_features.npy")
+        fp_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/fashion_fps_features.npy")
         for model in ['lenet1','lenet5']:
             print(dataset, model)
             path = dir_path + dataset + '_' + model + '/'
@@ -311,13 +343,17 @@ for dataset in datasets:
             img_arrays = np.load(base_path+'/fashion_test_images.npy')
             img_paths = ori_mdata[0]
 
+
             for budget in [500,1000]:
                 print(budget)
-                CMPS(ori_mdata, mr_mdata, budget)
+                print("CMPS")
+                cmps(ori_mdata, mr_mdata, budget)
 
 
     elif dataset =='cifar10':
-        base_path = '/Users/miya_wang/Desktop/CMPS_replication/subjects/datasets/Cifar-10/test_img/'#you should change the path when running
+        base_path = '/Users/miya_wang/Desktop/CMPS++/cifar-10-batches-py/test_img/'#you should change the path when running
+        src_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/cifar_src_features.npy")
+        fp_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/cifar_fps_features.npy")
         for model in ['vgg19','resnet50']:
             print(dataset, model)
             path = dir_path + dataset + '_' + model + '/'
@@ -332,12 +368,39 @@ for dataset in datasets:
             else:
                 img_arrays = load_and_preprocess_images(img_paths)
 
-            for budget in [500,1000]:
+            for budget in [500, 1000]:
                 print(budget)
-                CMPS(ori_mdata, mr_mdata, budget)
+                print("CMPS")
+                cmps(ori_mdata, mr_mdata, budget)
+
+
+    elif dataset == "fruit360":
+        base_path = '/Users/miya_wang/Desktop/CMPS++/Fruit360/fruit360_subset/'
+        for model in ['mobilenetv2','shufflenet']:
+            print(dataset, model)
+            path = dir_path + dataset + '_' + model + '/'
+            ori_mdata, mr_mdata = data_process(path)
+
+            # get the image
+            image_names = ori_mdata[0]
+            directory_path = base_path[:-1]
+            img_paths = [os.path.join(directory_path, fname) for fname in image_names]
+            if not img_paths:
+                print("No images found in the specified directory.")
+            else:
+                img_arrays = load_and_preprocess_images(img_paths)
+
+
+            for budget in [500, 1000]:
+                print(budget)
+                print("CMPS")
+                cmps(ori_mdata, mr_mdata, budget)
+
 
     elif dataset =='imagenet':
-        base_path = '/Users/miya_wang/Desktop/CMPS_replication/subjects/datasets/ImageNet/'#you should change the path when running
+        base_path = '/Users/miya_wang/Desktop/CMPS++/ImageNet/'#you should change the path when running
+        src_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/imagenet_src_features.npy")
+        fp_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/imagenet_fps_features.npy")
         for model in ['googlenet','resnet50']:
             print(dataset, model)
             path = dir_path + dataset + '_' + model + '/'
@@ -351,6 +414,7 @@ for dataset in datasets:
             else:
                 img_arrays = load_and_preprocess_images(img_paths)
 
-            for budget in [500,1000]:
+            for budget in [500, 1000]:
                 print(budget)
-                CMPS(ori_mdata, mr_mdata, budget)
+                print("CMPS")
+                cmps(ori_mdata, mr_mdata, budget)
