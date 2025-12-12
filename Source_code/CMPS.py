@@ -327,7 +327,7 @@ def cmps(ori_mdata,mr_mdata,budget):
 mr_list = ['flipLeftRight', 'gaussian', 'colored', 'rotatePlus5deg', 'brightness']
 mr_list2 = ['flip_left_right 0', 'gaussian 2', 'colored 1.6', 'rotate 5', 'brightness 1.3']
 cell_list = ['fileNamesArray', 'labelSourceArray', 'confidenceSourceArray', 'labelFollowUpArray', 'confidenceFollowUpArray']
-dir_path = '/Users/miya_wang/Desktop/Papers/Second_paper/DNN-MT/matlab/' #you should change the path when running
+dir_path = '/Users/miya_wang/Desktop/Papers/Second_paper/DNN-MT/matlab/' # you should change the path when running
 datasets =  ['fashion', 'cifar10','fruit360', 'imagenet']
 
 for dataset in datasets:
