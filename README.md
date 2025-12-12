@@ -84,3 +84,18 @@ The implementations of these five MRs are in the `mr_5.py` file under the `src` 
 For **easy replication**, each subfolder in the `Input_data` directory contains data for the corresponding experimental subjects, including the model's predicted labels for the source test cases, output probabilities of source test cases, and predicted labels for the follow-up test cases. This way, you can directly read the corresponding `.mat` files of each subject for processing without the need to load and run the models. Taking the `cifar10_vgg19` folder as an example, the results of each MR are stored separately in their respective `.mat` files, totaling five files.
 
 
+### 3) Baseline Approaches
+
+* **CMPS** : We directly used the [replication package](https://github.com/GIST-NJU/CMPS) provided by the original paper "​*CMPS: Cluster-Based Multi-Objective Metamorphic Test Case Pair Selection for Deep Neural Networks*​"
+* **MPSS** : We directly used the [replication package](https://github.com/Napoleon4th/MPSS) provided by the original paper "​*Boosting the Cost-Effectiveness of Metamorphic Test Case Pair Selection for Deep Learning Testing with Surrogate Model*​"
+* **NSGA-II** : We directly used the [replication package](https://doi.org/10.5281/zenodo.6389008) provided by the original paper "​*Multi-Objective Metamorphic Follow-up Test Case Selection for Deep Learning Systems*​"
+  Run the following command to obtain the TRCs of the NSGA-II's raw results :
+  `python NSGA-II.py`
+  We also store the original random selection results of NSGA-II from our experiment in the `results` subfolder within the `NSGA-II` directory. The storage format is a list of length 10, where each element is a list of length 5, corresponding to the indices of source test cases selected for each of the five MRs.
+* **Random Selection (RS)** : The `Source_code/random_selection.py` file provides the implementation of the RS approach.
+  Run the following function to perform MP selection:
+  `python random_selection.py`
+  We also store the original RS results from our experiment in the `RS` subfolder within the `results` directory. The storage format consists of index pairs `(i, j)`, where `i` represents the MR index and `j` represents the source test case index.
+
+
+
