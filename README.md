@@ -97,5 +97,15 @@ For **easy replication**, each subfolder in the `Input_data` directory contains 
   `python random_selection.py`
   We also store the original RS results from our experiment in the `RS` subfolder within the `results` directory. The storage format consists of index pairs `(i, j)`, where `i` represents the MR index and `j` represents the source test case index.
 
+### 4) Experiment Execution
+
+After obtaining all the required input data in `Input_data` (either by using the pre-generated data directly, or running data processing scripts to generate such data), run the following command to perform the experiments of each research question:
+
+- **RQ1 (Effectiveness)**: run `python exp_1.py` (You need to change the `data_path` variable to the actual path where your `Fault_clusters` folder is located before you run). This will run SETS with different combiantions of uncertainty and diversity metrics and SETS with different values of the reduction coefficient on all subjects.
+  The `Experiment_results\RQ1` folder provides all raw experimental results reported in the paper.
+- **RQ2 (Efficiency)**: The `Experiment_results\RQ2` folder provides all raw experimental results reported in the paper.
+- **RQ3 (Ablation)**:   The `Experiment_results\RQ3` folder provides all raw experimental results reported in the paper.
+- **RQ4 (Parameter)**: The `Experiment_results\RQ4` folder provides all raw experimental results reported in the paper
+
 
 
