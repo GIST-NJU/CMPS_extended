@@ -300,12 +300,6 @@ def cmps(ori_mdata,mr_mdata,budget):
             good_clus_list = []
             bad_clus_list = []
 
-    #output_path = '/Users/miya_wang/Desktop/Papers/Second_paper/DNN-MT/replication/CMPS/' + dataset + '_' + model + '_' + str(file_budget) + '.pkl'
-    #with open(output_path,'w') as file:
-        #json.dump(fault_record, file)
-
-
-    #print(error_num)
 
 
     print("TRC:",error_num / model_run_times)
