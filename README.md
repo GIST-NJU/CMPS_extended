@@ -9,16 +9,25 @@ This folder serves as the replication package for the paper: “CMPS++: Uncertai
 ```
 .
 ├── Input_data
-│   ├── Fault_clusters
-│   ├── Pretrained_model
-│   └── Retrain
+│   ├── cifar10_resnet50
+│   ├── cifar10_vgg19
+│   ├── fashion_lenet1
+│   ├── fashion_lenet5
+│   ├── fruit360_mobilenetv2
+│   ├── fruit360_shufflenet
+│   ├── imagenet_googlenet
+│   ├── imagenet_resnet
+│   └── Subjects
+├── Source_code
+├── Matlab
 ├── Experiment_results
-│   ├── RQ1
-│   ├── RQ2&3
-│   └── RQ4
-├── Readme.md
+│   ├── RQ1
+│   ├── RQ2
+│   ├── RQ3
+│   └── RQ4
 ├── requirements.txt
-└── Source_code
+├── README.md
+└── LICENSE
 ```
 
 ## Requirements
@@ -38,6 +47,7 @@ Run the following function to perform MP selection for a given test selection pr
 ```python
 def cmps_extend (ori_mdata,mr_mdata,budget)
 ```
+
 The input parameters include:
 
 * `ori_mdata`: ori_data[0] = filenames, ori_data[1] = source_labels,ori_data[2] = output probabilities of source (dist)
@@ -83,7 +93,6 @@ The implementations of these five MRs are in the `mr_5.py` file under the `src` 
 
 For **easy replication**, each subfolder in the `Input_data` directory contains data for the corresponding experimental subjects, including the model's predicted labels for the source test cases, output probabilities of source test cases, and predicted labels for the follow-up test cases. This way, you can directly read the corresponding `.mat` files of each subject for processing without the need to load and run the models. Taking the `cifar10_vgg19` folder as an example, the results of each MR are stored separately in their respective `.mat` files, totaling five files.
 
-
 ### 3) Baseline Approaches
 
 * **CMPS** : We directly used the [replication package](https://github.com/GIST-NJU/CMPS) provided by the original paper "​*CMPS: Cluster-Based Multi-Objective Metamorphic Test Case Pair Selection for Deep Neural Networks*​"
@@ -91,7 +100,7 @@ For **easy replication**, each subfolder in the `Input_data` directory contains 
 * **NSGA-II** : We directly used the [replication package](https://doi.org/10.5281/zenodo.6389008) provided by the original paper "​*Multi-Objective Metamorphic Follow-up Test Case Selection for Deep Learning Systems*​"
   Run the following command to obtain the TRCs of the NSGA-II's raw results :
   `python NSGA-II.py`
-  We also store the original random selection results of NSGA-II from our experiment in the `results` subfolder within the `NSGA-II` directory. The storage format is a list of length 10, where each element is a list of length 5, corresponding to the indices of source test cases selected for each of the five MRs.
+  We also store the original random selection results of NSGA-II from our experiment in the `Experiment_results` subfolder within the `NSGA-II` directory. The storage format is a list of length 10, where each element is a list of length 5, corresponding to the indices of source test cases selected for each of the five MRs.
 * **Random Selection (RS)** : The `Source_code/random_selection.py` file provides the implementation of the RS approach.
   Run the following function to perform MP selection:
   `python random_selection.py`
@@ -99,13 +108,10 @@ For **easy replication**, each subfolder in the `Input_data` directory contains 
 
 ### 4) Experiment Execution
 
-After obtaining all the required input data in `Input_data` (either by using the pre-generated data directly, or running data processing scripts to generate such data), run the following command to perform the experiments of each research question:
+After obtaining all the required input data in `Input_data` (either by using the pre-generated data directly, or running data processing scripts in `Matlab` subfolder to generate such data), run the following command to perform the experiments of each research question:
 
-- **RQ1 (Effectiveness)**: run `python exp_1.py` (You need to change the `data_path` variable to the actual path where your `Fault_clusters` folder is located before you run). This will run SETS with different combiantions of uncertainty and diversity metrics and SETS with different values of the reduction coefficient on all subjects.
-  The `Experiment_results\RQ1` folder provides all raw experimental results reported in the paper.
-- **RQ2 (Efficiency)**: The `Experiment_results\RQ2` folder provides all raw experimental results reported in the paper.
-- **RQ3 (Ablation)**:   The `Experiment_results\RQ3` folder provides all raw experimental results reported in the paper.
-- **RQ4 (Parameter)**: The `Experiment_results\RQ4` folder provides all raw experimental results reported in the paper
-
-
-
+- **RQ1 (Effectiveness)**: Run the implementation of each approach separately, e.g., `CMPS.py`, `cmps_extended.py`. The `Experiment_results/RQ1` folder contains all raw experimental results reported in the paper.
+- **RQ2 (Efficiency)**: During RQ1, we record the MP selection time.
+  Run `Matlab/**time.m` to obtain the model inference time, and the corresponding results will be generated. The `Experiment_results/RQ2` folder contains all raw experimental results reported in the paper.
+- **RQ3 (Ablation)**:   Run `cmps_variants.py` to obtain the results. The `Experiment_results\RQ3` folder contains all raw experimental results reported in the paper.
+- **RQ4 (Parameter)**: Run `parameter.py` to obtain the results and figures for the three main parameters. The `Experiment_results\RQ4` folder contains all raw experimental results reported in the paper.
