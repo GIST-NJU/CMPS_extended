@@ -261,10 +261,12 @@ def CMPS_extend(ori_mdata,mr_mdata,budget):
             mr_idx = remaining.pop(0)
 
             # Apply MR transformation to generate follow-up image
+            # The validity of all follow-ups has been checked by SSIM and manual analysis
+            # in our experiment, you can directly use
             follow_up_img = mr_5.test_mrs(src_img, mr_list2[mr_idx])
 
             # Get follow-up label (fashion uses base_path + img_path as key)
-            # Note: in real scenario, follow_up_img would be fed to the DNN model to get f_label
+            # In real scenario, follow_up_img would be fed to the DNN model to get f_label
             # Here we read from pre-computed .mat results since models run in Matlab
             if dataset == 'fashion':
                 mr_key = base_path + img_path
