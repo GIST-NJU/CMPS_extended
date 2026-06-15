@@ -168,6 +168,18 @@ def CMPS_extend(ori_mdata,mr_mdata,budget):
     round = 0  # update the iteration
     file_budget = budget
 
+    # MA2-A global state variables
+    PRIOR_HITS, PRIOR_TRIES = 1.0, 5.0
+    hits_per_mr = [PRIOR_HITS] * 5  # 5 MRs
+    tries_per_mr = [PRIOR_TRIES] * 5
+    seen_unique = set()
+    sources_with_new_pair = 0
+    total_sources_done = 0
+    total_pairs_found = 0
+    max_k = 5
+    marginal_unique_at_k = [1.0] * max_k  # Laplace prior
+    marginal_tries_at_k = [2.0] * max_k   # Laplace prior
+
     while budget > 0:
 
         #budget -= 1
@@ -211,122 +223,104 @@ def CMPS_extend(ori_mdata,mr_mdata,budget):
         if not flag:
             print("no valid image")
 
-        if dataset == 'fashion':
-            ori_label = imgpath_orilabel_dict[img_path]
+        # --- MA2-A MR selection logic ---
+        ori_label = imgpath_orilabel_dict[img_path]
 
-            followup_img_array_list = []
-            eu_distance = []
-            for mr in mr_list2:
-                img = img_arrays[ori_mdata[0].index(img_path)]
-                image_pil = Image.fromarray(img)
-                followup_img = mr_5.test_mrs(image_pil, mr) # the valid has been checked by SSIM and manual analysis in our experiment, you can directly compute the euclidean_distance
-                followup_img_array = image.img_to_array(followup_img)
-                followup_img_array_list.append(followup_img_array)
+        # Compute Bayesian estimates
+        source_yield_rate = (sources_with_new_pair + 1) / (total_sources_done + 2)
+        pair_uniqueness_rate = (len(seen_unique) + 1) / (total_pairs_found + 2)
 
-                euclidean_distance = euclidean(img.flatten(), followup_img_array.flatten())
-                eu_distance.append(euclidean_distance)
+        # Conditional decay
+        if pair_uniqueness_rate < source_yield_rate:
+            decay = 1.0 - (1.0 - source_yield_rate) * pair_uniqueness_rate
+        else:
+            decay = source_yield_rate
 
-            #对欧氏距离进行排序，返回索引
-            eu_distance_sorted_indices = sorted(range(len(eu_distance)), key=lambda i: eu_distance[i], reverse=True)
-            for idx in eu_distance_sorted_indices:
-                if budget <= 0: # 预算用完
-                    break
-                ind = base_path + img_path
-                f_label = mr_mdata[idx][ind][0]
-                model_run_times += 1
-                budget -= 1
+        # Sort MRs by global novelty rate
+        novelty_rate = [hits_per_mr[m] / tries_per_mr[m] for m in range(5)]
+        next_max = max(novelty_rate)
+        order = sorted(range(5), key=lambda m: novelty_rate[m], reverse=True)
+        remaining = list(order)
 
-                if ori_label == f_label: #若遇到相同标签，不再往下选择
-                    if eu_distance_sorted_indices.index(idx) == 0:      # 最大距离都不出错，不再尝试更小的距离,此为bad_cluster
-                        if image_cluster[img_path] in image_cluster_count: #若这是本聚类的最后一张，image_cluster_count在之前已被删除，因此不会再次加到下一轮cluster中
-                            bad_clus_list.append(image_cluster[img_path])
+        k = 0
+        any_violation = False
+        found_new_pair_this_source = False
 
-                    if img_path not in select_record:# 记录当前的选择
-                        select_record[img_path] = [(mr_list[idx], ori_label, f_label)]
-                    else:
-                        select_record[img_path].append((mr_list[idx], ori_label, f_label))
-                    break
+        while remaining and budget > 0:
+            mr_idx = remaining.pop(0)
 
-                else:  #最大距离出错，继续寻找
-                    error_num += 1
-                    if eu_distance_sorted_indices.index(idx) == 0:
-                        if image_cluster[img_path] in image_cluster_count:
-                            good_clus_list.append(image_cluster[img_path])
+            # Get follow-up label (fashion uses base_path + img_path as key)
+            if dataset == 'fashion':
+                mr_key = base_path + img_path
+            else:
+                mr_key = img_path
+            f_label = mr_mdata[mr_idx][mr_key][0]
+            model_run_times += 1
+            budget -= 1
+            k += 1
+            tries_per_mr[mr_idx] += 1
 
-                    if img_path not in select_record:# 记录选择
-                        select_record[img_path] = [(mr_list[idx], ori_label, f_label)]
-                    else:
-                        select_record[img_path].append((mr_list[idx], ori_label, f_label))
+            violated = (f_label != ori_label)
+            new_unique_this_step = False
 
-                    if img_path not in fault_record:
-                        fault_record[img_path] = [(mr_list[idx], ori_label, f_label)]
-                    else:
-                        # 检查 (ori_label, f_label) 是否已经存在
-                        exists = any((ori == ori_label and f == f_label) for _, ori, f in fault_record[img_path])
-                        if not exists:
-                            fault_record[img_path].append((mr_list[idx], ori_label, f_label))
-                        else:  # 已经存在了相同的标签对，后续不找了
-                            break
+            if violated:
+                any_violation = True
+                error_num += 1
+                total_pairs_found += 1
+                pair = (ori_label, f_label)
+                if pair not in seen_unique:
+                    seen_unique.add(pair)
+                    hits_per_mr[mr_idx] += 1
+                    found_new_pair_this_source = True
+                    new_unique_this_step = True
 
+                # Record in fault_record
+                if img_path not in fault_record:
+                    fault_record[img_path] = [(mr_list[mr_idx], ori_label, f_label)]
+                else:
+                    exists = any((ori == ori_label and f == f_label) for _, ori, f in fault_record[img_path])
+                    if not exists:
+                        fault_record[img_path].append((mr_list[mr_idx], ori_label, f_label))
 
+            # Record in select_record
+            if img_path not in select_record:
+                select_record[img_path] = [(mr_list[mr_idx], ori_label, f_label)]
+            else:
+                select_record[img_path].append((mr_list[mr_idx], ori_label, f_label))
 
+            # Update marginal uniqueness for position k
+            marginal_tries_at_k[k - 1] += 1
+            if new_unique_this_step:
+                marginal_unique_at_k[k - 1] += 1
 
-        else: # cifar10 & imagenet
-            img = image.load_img(img_path)
-            img = img.convert('RGB')
-            ori_img_array = image.img_to_array(img)
-            ori_label = imgpath_orilabel_dict[img_path]
+            # Stopping rules
+            if not remaining:
+                break
 
-            fault_result = {}
-            followup_img_array_list = []
-            eu_distance = []
-
-            for mr in mr_list2:
-                followup_img = mr_5.test_mrs(img, mr)
-                followup_img_array = image.img_to_array(followup_img)
-                followup_img_array_list.append(followup_img_array)
-                euclidean_distance = euclidean(ori_img_array.flatten(), followup_img_array.flatten())
-                eu_distance.append(euclidean_distance)
-
-            eu_distance_sorted_indices = sorted(range(len(eu_distance)), key=lambda i: eu_distance[i], reverse=True)
-            for idx in eu_distance_sorted_indices:
-                if budget <= 0: # 预算用完
-                    break
-                f_label = mr_mdata[idx][img_path][0]
-                model_run_times += 1
-                budget -= 1
-
-                if ori_label == f_label:
-                    if  eu_distance_sorted_indices.index(idx) == 0:      # 最大距离都不出错，不再尝试更小的距离,此为bad_cluster
-                        if image_cluster[img_path] in image_cluster_count: #若这是本聚类的最后一张，image_cluster_count在之前已被删除，因此不会再次加到下一轮cluster中
-                            bad_clus_list.append(image_cluster[img_path])
-
-                    if img_path not in select_record:# 记录当前的选择
-                        select_record[img_path] = [(mr_list[idx], ori_label, f_label)]
-                    else:
-                        select_record[img_path].append((mr_list[idx], ori_label, f_label))
+            # 1. Marginal uniqueness stopping: check next position
+            next_k = k  # 0-indexed for next position
+            if next_k < max_k:
+                marginal_rate = marginal_unique_at_k[next_k] / marginal_tries_at_k[next_k]
+                if marginal_rate < source_yield_rate * 0.5:
                     break
 
-                else:  #最大距离出错，继续寻找
-                    error_num += 1
-                    if eu_distance_sorted_indices.index(idx) == 0:
-                        if image_cluster[img_path] in image_cluster_count:
-                            good_clus_list.append(image_cluster[img_path])
+            # 2. Decay stopping: remaining MRs' max novelty vs threshold
+            cur_max = max(hits_per_mr[m] / tries_per_mr[m] for m in remaining)
+            if cur_max < next_max * decay:
+                break
 
-                    if img_path not in select_record:# 记录选择
-                        select_record[img_path] = [(mr_list[idx], ori_label, f_label)]
-                    else:
-                        select_record[img_path].append((mr_list[idx], ori_label, f_label))
+        # Good/Bad cluster classification based on first MR result
+        if k > 0:
+            if any_violation and image_cluster[img_path] in image_cluster_count:
+                # First MR produced violation -> good cluster
+                good_clus_list.append(image_cluster[img_path])
+            elif not any_violation and image_cluster[img_path] in image_cluster_count:
+                # First MR did not produce violation -> bad cluster
+                bad_clus_list.append(image_cluster[img_path])
 
-                    if img_path not in fault_record:
-                        fault_record[img_path] = [(mr_list[idx], ori_label, f_label)]
-                    else:
-                        # 检查 (ori_label, f_label) 是否已经存在
-                        exists = any((ori == ori_label and f == f_label) for _, ori, f in fault_record[img_path])
-                        if not exists:
-                            fault_record[img_path].append((mr_list[idx], ori_label, f_label))
-                        else:  # 已经存在了标签对，后续不找了，即使是最后一个也能处理
-                            break
+        if found_new_pair_this_source:
+            sources_with_new_pair += 1
+        total_sources_done += 1
 
         flag_c = True
         for k, v in image_cluster_count.items():
