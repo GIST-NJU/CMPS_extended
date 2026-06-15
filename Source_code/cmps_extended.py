@@ -111,6 +111,9 @@ def maxp(outputs): #越大越不确定
 
 
 def CMPS_extend(ori_mdata,mr_mdata,budget):
+    # Build img_path -> index mapping for loading source images
+    imgpath_to_idx = {p: i for i, p in enumerate(img_paths)}
+
     # clustering
     predictions = ori_mdata[2]
     if dataset == 'imagenet':
@@ -223,6 +226,14 @@ def CMPS_extend(ori_mdata,mr_mdata,budget):
         if not flag:
             print("no valid image")
 
+        # --- Load source image for MR transformation ---
+        if dataset == 'fashion':
+            # Fashion images from numpy array (grayscale 28x28)
+            src_img = Image.fromarray(img_arrays[imgpath_to_idx[img_path]].astype(np.uint8))
+        else:
+            # Other datasets: load original image from disk
+            src_img = Image.open(img_path)
+
         # --- MA2-A MR selection logic ---
         ori_label = imgpath_orilabel_dict[img_path]
 
@@ -249,7 +260,12 @@ def CMPS_extend(ori_mdata,mr_mdata,budget):
         while remaining and budget > 0:
             mr_idx = remaining.pop(0)
 
+            # Apply MR transformation to generate follow-up image
+            follow_up_img = mr_5.test_mrs(src_img, mr_list2[mr_idx])
+
             # Get follow-up label (fashion uses base_path + img_path as key)
+            # Note: in real scenario, follow_up_img would be fed to the DNN model to get f_label
+            # Here we read from pre-computed .mat results since models run in Matlab
             if dataset == 'fashion':
                 mr_key = base_path + img_path
             else:
@@ -346,6 +362,8 @@ def CMPS_extend(ori_mdata,mr_mdata,budget):
         faults = 90
     print("FDR:", len(unique_pairs) / faults)
 
+    return select_record
+
 
 
 
@@ -372,7 +390,11 @@ for dataset in datasets:
             for budget in [500,1000]:
                 print(budget)
                 print("CMPS++")
-                CMPS_extend(ori_mdata, mr_mdata, budget)
+                select_record = CMPS_extend(ori_mdata, mr_mdata, budget)
+                save_path = f'/Users/miya_wang/Desktop/CMPS++/CMPS_extended/Experiment_results/RQ1/CMPS++/{dataset}_{model}_{budget}.pkl'
+                with open(save_path, 'wb') as f:
+                    pickle.dump(select_record, f)
+                print(f"Saved: {save_path}")
 
 
     elif dataset =='cifar10':
@@ -396,7 +418,11 @@ for dataset in datasets:
             for budget in [500, 1000]:
                 print(budget)
                 print("CMPS++")
-                CMPS_extend(ori_mdata, mr_mdata, budget)
+                select_record = CMPS_extend(ori_mdata, mr_mdata, budget)
+                save_path = f'/Users/miya_wang/Desktop/CMPS++/CMPS_extended/Experiment_results/RQ1/CMPS++/{dataset}_{model}_{budget}.pkl'
+                with open(save_path, 'wb') as f:
+                    pickle.dump(select_record, f)
+                print(f"Saved: {save_path}")
 
 
     elif dataset == "fruit360":
@@ -419,7 +445,11 @@ for dataset in datasets:
             for budget in [500, 1000]:
                 print(budget)
                 print("CMPS++")
-                CMPS_extend(ori_mdata, mr_mdata, budget)
+                select_record = CMPS_extend(ori_mdata, mr_mdata, budget)
+                save_path = f'/Users/miya_wang/Desktop/CMPS++/CMPS_extended/Experiment_results/RQ1/CMPS++/{dataset}_{model}_{budget}.pkl'
+                with open(save_path, 'wb') as f:
+                    pickle.dump(select_record, f)
+                print(f"Saved: {save_path}")
 
 
     elif dataset =='imagenet':
@@ -442,6 +472,9 @@ for dataset in datasets:
             for budget in [500, 1000]:
                 print(budget)
                 print("CMPS++")
-                CMPS_extend(ori_mdata, mr_mdata, budget)
-
+                select_record = CMPS_extend(ori_mdata, mr_mdata, budget)
+                save_path = f'/Users/miya_wang/Desktop/CMPS++/CMPS_extended/Experiment_results/RQ1/CMPS++/{dataset}_{model}_{budget}.pkl'
+                with open(save_path, 'wb') as f:
+                    pickle.dump(select_record, f)
+                print(f"Saved: {save_path}")
 
