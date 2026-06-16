@@ -110,7 +110,7 @@ For **easy replication**, each subfolder in the `Input_data` directory contains 
 
 After obtaining all the required input data in `Input_data` (either by using the pre-generated data directly, or running data processing scripts in `Matlab` subfolder to generate such data), run the following command to perform the experiments of each research question:
 
-- **RQ1 (Effectiveness)**: Run the implementation of each approach separately, e.g., `CMPS.py`, `cmps_extended.py`. The `Experiment_results/RQ1` folder contains all raw experimental results reported in the paper.
+- **RQ1 (Effectiveness)**: Run the implementation of each approach separately, e.g., `cmps.py`, `cmps_extended.py`. The `Experiment_results/RQ1` folder contains all raw experimental results reported in the paper.
 - **RQ2 (Efficiency)**: During RQ1, we record the MP selection time.
   Run `Matlab/**time.m` to obtain the model inference time, and the corresponding results will be generated. The `Experiment_results/RQ2` folder contains all raw experimental results reported in the paper.
 - **RQ3 (Ablation)**:   Run `cmps_variants.py` to obtain the results. The `Experiment_results\RQ3` folder contains all raw experimental results reported in the paper.
