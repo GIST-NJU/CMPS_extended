@@ -141,18 +141,16 @@ def CMPS_extend(ori_mdata,mr_mdata,budget):
     image_uncertainty = dict()
     image_cluster = {}
 
-    #指标权重
-    w_maxp = n / (n + 10) # n是数据集的标签个数
-    w_gini = 1 - w_maxp
-
-
     for index in range(len(img_paths)):
         image_cluster[img_paths[index]] = dbscan_labels[index]  # 图像路径-图像聚类num
         imgpath_pred_dict[img_paths[index]] = predictions[index]
         ori_label = ori_mdata[1][index]
         imgpath_orilabel_dict[img_paths[index]] = ori_label
 
-        image_uncertainty[img_paths[index]] = w_gini* deepgini(predictions[index])+ w_maxp * maxp(predictions[index]) # CMPS++
+        # CMPS++ Composite Uncertainty: Harmonic Mean of DeepGini and MaxP (parameter-free)
+        gini = deepgini(predictions[index])
+        mp = 1.0 - max(predictions[index])
+        image_uncertainty[img_paths[index]] = 2 * gini * mp / (gini + mp + 1e-10)
 
     image_uncertainty_sorted = sorted(image_uncertainty.items(), key=lambda x: x[1], reverse=True)  # 从高到低
 
@@ -378,8 +376,6 @@ datasets =  ['fashion', 'cifar10','fruit360', 'imagenet']
 for dataset in datasets:
     if dataset =='fashion':
         base_path = '/Users/miya_wang/Desktop/CMPS++/Fashion-MNIST' #you should change the path when running
-        src_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/fashion_src_features.npy")
-        fp_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/fashion_fps_features.npy")
         for model in ['lenet1','lenet5']:
             print(dataset, model)
             path = dir_path + dataset + '_' + model + '/'
@@ -401,8 +397,6 @@ for dataset in datasets:
 
     elif dataset =='cifar10':
         base_path = '/Users/miya_wang/Desktop/CMPS++/cifar-10-batches-py/test_img/'#you should change the path when running
-        src_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/cifar_src_features.npy")
-        fp_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/cifar_fps_features.npy")
         for model in ['vgg19','resnet50']:
             print(dataset, model)
             path = dir_path + dataset + '_' + model + '/'
@@ -456,8 +450,6 @@ for dataset in datasets:
 
     elif dataset =='imagenet':
         base_path = '/Users/miya_wang/Desktop/CMPS++/ImageNet/'#you should change the path when running
-        src_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/imagenet_src_features.npy")
-        fp_features = np.load("/Users/miya_wang/Desktop/Papers/Fourth_paper/features/imagenet_fps_features.npy")
         for model in ['googlenet','resnet50']:
             print(dataset, model)
             path = dir_path + dataset + '_' + model + '/'
