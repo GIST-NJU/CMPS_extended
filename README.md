@@ -62,16 +62,16 @@ The output will be  a TRC and  a FDR value calculated by the selected MPs.
 
 In our experiments, we selected four datasets and assigned two DNN models to each dataset, i.e., a total of eight experimental subjects, as follows:
 
-| Dataset       | Test Set | DNN Model    |
-|:-------------:|:--------:|:-------------:|
-| Fashion-MNIST | 10,000   | LeNet1        |
-|               |          | LeNet5        |
-| CIFAR-10      | 10,000   | VGG19         |
-|               |          | ResNet50      |
-| ImageNet      | 10,000   | GoogleNet     |
-|               |          | ResNet50      |
-| Fruit-360     | 10,000    | MobileNetV2   |
-|               |          | ShuffleNet    |`
+|    Dataset    | Test Set |  DNN Model  |
+| :-----------: | :------: | :---------: |
+| Fashion-MNIST |  10,000  |   LeNet1   |
+|              |          |   LeNet5   |
+|   CIFAR-10   |  10,000  |    VGG19    |
+|              |          |  ResNet50  |
+|   ImageNet   |  10,000  |  GoogleNet  |
+|              |          |  ResNet50  |
+|   Fruit-360   |  10,000  | MobileNetV2 |
+|              |          | ShuffleNet |
 
 We provide all the datasets and pretrained DNN models in the `Input_data\Subjects` folder.
 
@@ -95,9 +95,9 @@ For **easy replication**, each subfolder in the `Input_data` directory contains 
 
 ### 3) Baseline Approaches
 
-* **CMPS** : We directly used the [replication package](https://github.com/GIST-NJU/CMPS) provided by the original paper "​*CMPS: Cluster-Based Multi-Objective Metamorphic Test Case Pair Selection for Deep Neural Networks*​"
-* **MPSS** : We directly used the [replication package](https://github.com/Napoleon4th/MPSS) provided by the original paper "​*Boosting the Cost-Effectiveness of Metamorphic Test Case Pair Selection for Deep Learning Testing with Surrogate Model*​"
-* **NSGA-II** : We directly used the [replication package](https://doi.org/10.5281/zenodo.6389008) provided by the original paper "​*Multi-Objective Metamorphic Follow-up Test Case Selection for Deep Learning Systems*​"
+* **CMPS** : We directly used the [replication package](https://github.com/GIST-NJU/CMPS) provided by the original paper "*CMPS: Cluster-Based Multi-Objective Metamorphic Test Case Pair Selection for Deep Neural Networks*"
+* **MPSS** : We directly used the [replication package](https://github.com/Napoleon4th/MPSS) provided by the original paper "*Boosting the Cost-Effectiveness of Metamorphic Test Case Pair Selection for Deep Learning Testing with Surrogate Model*"
+* **NSGA-II** : We directly used the [replication package](https://doi.org/10.5281/zenodo.6389008) provided by the original paper "*Multi-Objective Metamorphic Follow-up Test Case Selection for Deep Learning Systems*"
   Run the following command to obtain the TRCs of the NSGA-II's raw results :
   `python NSGA-II.py`
   We also store the original random selection results of NSGA-II from our experiment in the `Experiment_results` subfolder within the `NSGA-II` directory. The storage format is a list of length 10, where each element is a list of length 5, corresponding to the indices of source test cases selected for each of the five MRs.
@@ -113,5 +113,5 @@ After obtaining all the required input data in `Input_data` (either by using the
 - **RQ1 (Effectiveness)**: Run the implementation of each approach separately, e.g., `cmps.py`, `cmps_extended.py`. The `Experiment_results/RQ1` folder contains all raw experimental results reported in the paper.
 - **RQ2 (Efficiency)**: During RQ1, we record the MP selection time.
   Run `Matlab/**time.m` to obtain the model inference time, and the corresponding results will be generated. The `Experiment_results/RQ2` folder contains all raw experimental results reported in the paper.
-- **RQ3 (Ablation)**:   Run `cmps_variants.py` to obtain the results. The `Experiment_results\RQ3` folder contains all raw experimental results reported in the paper.
+- **RQ3 (Ablation)**:   Run `cmps_variants.py`and `cmps_variants_new.py` to obtain the results. The `Experiment_results\RQ3` folder contains all raw experimental results reported in the paper.
 - **RQ4 (Parameter)**: Run `parameter.py` to obtain the results and figures for the three main parameters. The `Experiment_results\RQ4` folder contains all raw experimental results reported in the paper.
