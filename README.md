@@ -113,5 +113,5 @@ After obtaining all the required input data in `Input_data` (either by using the
 - **RQ1 (Effectiveness)**: Run the implementation of each approach separately, e.g., `cmps.py`, `cmps_extended.py`. The `Experiment_results/RQ1` folder contains all raw experimental results reported in the paper.
 - **RQ2 (Efficiency)**: During RQ1, we record the MP selection time.
   Run `Matlab/**time.m` to obtain the model inference time, and the corresponding results will be generated. The `Experiment_results/RQ2` folder contains all raw experimental results reported in the paper.
-- **RQ3 (Ablation)**:   Run `cmps_variants.py`and `cmps_variants_new.py` to obtain the results. The `Experiment_results\RQ3` folder contains all raw experimental results reported in the paper.
-- **RQ4 (Parameter)**: Run `parameter.py` to obtain the results and figures for the three main parameters. The `Experiment_results\RQ4` folder contains all raw experimental results reported in the paper.
+- **RQ3 (Ablation)**:   Run `cmps_variants.py`,`cmps_variants_new.py` to obtain the results. The `Experiment_results\RQ3` folder contains all raw experimental results reported in the paper.
+- **RQ4 (Parameter)**: Run `parameter.pycmps_stopping_sensitivity.py`and `cluster_diagnostics.py` to obtain the results and figures for the three main parameters. The `Experiment_results\RQ4` folder contains all raw experimental results reported in the paper.
